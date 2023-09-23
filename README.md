@@ -1,4 +1,4 @@
-# Desktop-Organiser
+#The **Desktop Organiser Tool** is a Python script that helps you tidy up your cluttered desktop
 ![Demo](desktop.gif)
 
 The **Desktop Organiser Tool** is a Python script that helps you tidy up your cluttered desktop or download directory by automatically organizing files into predefined categories. This tool allows you to perform a dry run to preview the organization before making any changes or customize the organization based on your preferences.
