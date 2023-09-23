@@ -19,11 +19,11 @@ The **Desktop Organiser Tool** is a Python script that helps you tidy up your cl
 ## Getting Started
 
 1. Clone this repository to your local machine:
-2.Create a config.json file with predefined categories.
+-2.Create a config.json file with predefined categories.
 See Sample config.json.
-3.Run the script:
-bash
-python organizer.py
+-3.Run the script:
+-bash
+-python organizer.py
 
 Usage
 Select a Mode:
