@@ -20,10 +20,13 @@ logging.basicConfig(filename="organizer.log", level=logging.INFO, format='%(asct
 # this function helps to recognise files with same name and adds a numeric value to distinguish them 
 
 def move_with_rename(source, destination):
+    if source == destination:
+        return
+
     base, extension = os.path.splitext(destination)
     count = 1
 
-    while os.path.exists(destination):
+    while os.path.exists(destination) and source != destination:
         destination = "%s (%d)%s" % (base, count, extension)
         count += 1
 
