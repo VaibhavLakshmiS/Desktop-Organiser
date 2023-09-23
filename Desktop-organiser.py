@@ -1,68 +1,131 @@
+# Import necessary libraries 
 import os
+import json
+import logging
 
-# Path to the Desktop
-# desktop_path = os.path.expanduser("~\\Desktop")
-desktop_path = os.path.join(os.path.expanduser('~'), 'Downloads')
+# Desktop path 
+desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
+downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
 
-# Categories for files and their extensions
-file_categories = {
-    'Images': ['.jpg', '.jpeg', '.png', '.gif'],
-    'Docs': ['.doc', '.docx', '.pdf', '.txt', '.xls', '.xlsx', '.ppt', '.pptx'],
-    'Music': ['.mp3', '.wav'],
-    'Videos': ['.mp4', '.mkv', '.mov'],
-}
+if not os.path.exists("config.json"):
+    print("Error: config.json not found.")
+    exit()
+
+# Loading the details from config.json 
+with open("config.json", "r") as file:
+    file_categories = json.load(file)
+# creates the log 
+logging.basicConfig(filename="organizer.log", level=logging.INFO, format='%(asctime)s - %(message)s')
+
+# this function helps to recognise files with same name and adds a numeric value to distinguish them 
+
+def move_with_rename(source, destination):
+    base, extension = os.path.splitext(destination)
+    count = 1
+
+    while os.path.exists(destination):
+        destination = "%s (%d)%s" % (base, count, extension)
+        count += 1
+
+    os.rename(source, destination)
+    logging.info("Moved %s to %s" % (source, destination))
+
+# this function helps to organise the files or if the dry run mode is selected it will tell its intended action 
 
 def organize(directory, dry_run=True, selected_categories=None):
-    """
-    Move files into categorized folders.
-    """
-    for filename in os.listdir(directory):
-        filepath = os.path.join(directory, filename)
-
-        # If it's a file, check its category and move it
-        if os.path.isfile(filepath):
+    for root, dirs, files in os.walk(directory):
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            
             for category, extensions in file_categories.items():
                 if selected_categories and category not in selected_categories:
                     continue
-
+                
                 if any(filename.endswith(ext) for ext in extensions):
                     folder_path = os.path.join(directory, category)
-
-                    # Make folder if it doesn't exist
+                    
                     if not os.path.exists(folder_path) and not dry_run:
                         os.mkdir(folder_path)
-
-                    # New path for the file
+                    
                     new_filepath = os.path.join(folder_path, filename)
 
-                    # Print the intended action
-                    print(f'{"Intend to" if dry_run else "Moved"} move {filename} to {folder_path}')
-
-                    # Move the file, unless it's a dry run
+                    # Print the intended action using old-style string formatting
+                    if dry_run:
+                        print("Intend to move %s to %s" % (filename, folder_path))
                     if not dry_run:
-                        os.rename(filepath, new_filepath)
-
-if __name__ == '__main__':
-    print("Select a mode:")
-    print("1) Dry Run")
-    print("2) Customizable")
+                        print("Moved %s to %s" % (filename, folder_path))
+                        move_with_rename(filepath, new_filepath)
+def seems_organized(directory):
+    #"""Check if the directory seems to be organized based on the categories."""
+    subdirectories = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+    organized_categories = [cat for cat in file_categories if cat in subdirectories]
     
+    for cat, extensions in file_categories.items():
+        for ext in extensions:
+            for file in os.listdir(directory):
+                if file.endswith(ext) and cat not in organized_categories:
+                    return False  # Found a mismatch, directory doesn't seem organized
+    return True
+def choose_option():
+    print("\nSelect the target location:")
+    print("1) Desktop")
+    print("2) Downloads")
+    print("3) Custom")
     choice = input("Enter the number of your choice: ")
 
+    directory = None
     if choice == "1":
-        organize(desktop_path)
+        directory = desktop_path
     elif choice == "2":
-        categories = list(file_categories.keys())
-        print("Available categories:")
-        for idx, category in enumerate(categories, 1):
-            print(f"{idx}) {category}")
-        selected = input("Enter the numbers of the categories you want to organize (comma-separated): ").split(',')
-        selected_categories = [categories[int(i)-1] for i in selected]
-        
-        directory_choice = input(f"Do you want to organize the Desktop or another directory? (D for Desktop, enter the path for another directory): ")
-        if directory_choice == 'D':
-            directory_choice = desktop_path
+        directory = downloads_path
+    elif choice == "3":
+        directory = input("Enter the full path to your custom directory: ")
+    else:
+        print("Invalid choice.")
+        return choose_option()
 
-        dry_run_choice = input("Do you want to perform a dry run? (Y/N): ").upper() == 'Y'
-        
-        organize(directory_choice, dry_run=dry_run_choice, selected_categories=selected_categories)
+    # Check if the directory exists
+    if not os.path.exists(directory) or not os.path.isdir(directory):
+        print(f"Error: The directory '{directory}' does not exist.")
+        return choose_option()
+    return directory
+
+
+def main():
+    while True:  # Main loop to keep the program running until the user chooses to exit.
+        print("\nSelect a mode:")
+        print("1) Dry Run")
+        print("2) Customizable")
+        print("3) Exit")
+        mode = input("Enter the number of your choice: ")
+
+        if mode == "3":
+            print("Exiting...")
+            break  # This will exit the while loop and end the program.
+
+        directory = choose_option()
+
+        if mode == "1":
+            if seems_organized(directory):
+                proceed = input("The directory seems already organized. Do you still want to proceed? (yes/no): ").strip().lower()
+                if proceed != 'yes':
+                    continue  # Skips to the next iteration of the loop, i.e., back to the menu.
+            organize(directory, dry_run=True)
+            proceed = input("\nDry run complete. Would you like to proceed with the actual organization? (yes/no): ").strip().lower()
+            if proceed == 'yes':
+                organize(directory, dry_run=False)
+        elif mode == "2":
+            categories = list(file_categories.keys())
+            print("\nAvailable categories:")
+            for idx, category in enumerate(categories, 1):
+                print("%d) %s" % (idx, category))
+            selected = input("Enter the numbers of the categories (comma-separated): ").split(',')
+            selected_categories = [categories[int(i)-1] for i in selected]
+            if seems_organized(directory):
+                proceed = input("The directory seems already organized. Do you still want to proceed? (yes/no): ").strip().lower()
+                if proceed != 'yes':
+                    continue  # Skips to the next iteration of the loop.
+            organize(directory, dry_run=False, selected_categories=selected_categories)
+
+if __name__ == '__main__':
+    main()
