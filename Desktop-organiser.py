@@ -36,30 +36,6 @@ def move_with_rename(source, destination):
 
 # this function helps to organise the files or if the dry run mode is selected it will tell its intended action 
 
-# def organize(directory, dry_run=True, selected_categories=None):
-#     for root, dirs, files in os.walk(directory):
-#         for filename in files:
-#             filepath = os.path.join(root, filename)
-            
-#             for category, extensions in file_categories.items():
-#                 if selected_categories and category not in selected_categories:
-#                     continue
-                
-#                 if any(filename.endswith(ext) for ext in extensions):
-#                     folder_path = os.path.join(directory, category)
-                    
-#                     if not os.path.exists(folder_path) and not dry_run:
-#                         os.mkdir(folder_path)
-                    
-#                     new_filepath = os.path.join(folder_path, filename)
-
-#                     # Print the intended action using old-style string formatting
-#                     if dry_run:
-#                         print("Intend to move %s to %s" % (filename, folder_path))
-#                     if not dry_run:
-#                         print("Moved %s to %s" % (filename, folder_path))
-#                         move_with_rename(filepath, new_filepath)
-
 def organize(directory, dry_run=True, selected_categories=None):
     for root, dirs, files in os.walk(directory, topdown=True):
         # Skip already categorized files
