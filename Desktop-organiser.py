@@ -7,6 +7,7 @@ import logging
 desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
 downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
 
+
 if not os.path.exists("config.json"):
     print("Error: config.json not found.")
     exit()
@@ -35,8 +36,36 @@ def move_with_rename(source, destination):
 
 # this function helps to organise the files or if the dry run mode is selected it will tell its intended action 
 
+# def organize(directory, dry_run=True, selected_categories=None):
+#     for root, dirs, files in os.walk(directory):
+#         for filename in files:
+#             filepath = os.path.join(root, filename)
+            
+#             for category, extensions in file_categories.items():
+#                 if selected_categories and category not in selected_categories:
+#                     continue
+                
+#                 if any(filename.endswith(ext) for ext in extensions):
+#                     folder_path = os.path.join(directory, category)
+                    
+#                     if not os.path.exists(folder_path) and not dry_run:
+#                         os.mkdir(folder_path)
+                    
+#                     new_filepath = os.path.join(folder_path, filename)
+
+#                     # Print the intended action using old-style string formatting
+#                     if dry_run:
+#                         print("Intend to move %s to %s" % (filename, folder_path))
+#                     if not dry_run:
+#                         print("Moved %s to %s" % (filename, folder_path))
+#                         move_with_rename(filepath, new_filepath)
+
 def organize(directory, dry_run=True, selected_categories=None):
-    for root, dirs, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory, topdown=True):
+        # Skip already categorized files
+        if any(category in root for category in file_categories):
+            continue
+        
         for filename in files:
             filepath = os.path.join(root, filename)
             
@@ -47,6 +76,7 @@ def organize(directory, dry_run=True, selected_categories=None):
                 if any(filename.endswith(ext) for ext in extensions):
                     folder_path = os.path.join(directory, category)
                     
+                    # Create folder if it doesn't exist and it's not a dry run
                     if not os.path.exists(folder_path) and not dry_run:
                         os.mkdir(folder_path)
                     
@@ -55,9 +85,10 @@ def organize(directory, dry_run=True, selected_categories=None):
                     # Print the intended action using old-style string formatting
                     if dry_run:
                         print("Intend to move %s to %s" % (filename, folder_path))
-                    if not dry_run:
+                    else:
                         print("Moved %s to %s" % (filename, folder_path))
                         move_with_rename(filepath, new_filepath)
+
 def seems_organized(directory):
     #"""Check if the directory seems to be organized based on the categories."""
     subdirectories = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
