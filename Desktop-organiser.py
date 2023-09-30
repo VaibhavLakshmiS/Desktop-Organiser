@@ -2,6 +2,12 @@
 import os
 import json
 import logging
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+root = tk.Tk()
+root.title("Desktop Organizer")
+root.geometry("300x250")
 
 # Desktop path 
 desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
@@ -100,7 +106,37 @@ def choose_option():
         return choose_option()
     return directory
 
+def organize_directory(directory, dry_run_mode=True):
+    try:
+        organize(directory, dry_run=dry_run_mode)
+        if dry_run_mode:
+            messagebox.showinfo("Dry Run Complete", "Review the console for the dry run actions.")
+        else:
+            messagebox.showinfo("Organization Complete", "Files have been organized!")
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+def start_dry_run():
+    directory = filedialog.askdirectory(title="Select Directory")
+    if directory:
+        organize_directory(directory, dry_run_mode=True)
+
+def start_organize():
+    directory = filedialog.askdirectory(title="Select Directory")
+    if directory:
+        organize_directory(directory, dry_run_mode=False)
+label = tk.Label(root, text="Desktop Organizer", font=("Arial", 16))
+label.pack(pady=20)
+
+btn_dry_run = tk.Button(root, text="Start Dry Run", command=start_dry_run)
+btn_dry_run.pack(pady=10)
+
+btn_organize = tk.Button(root, text="Organize", command=start_organize)
+btn_organize.pack(pady=10)
+
+btn_exit = tk.Button(root, text="Exit", command=root.destroy)
+btn_exit.pack(pady=20)
+root.mainloop()
 def main():
     while True:  # Main loop to keep the program running until the user chooses to exit.
         print("\nSelect a mode:")
